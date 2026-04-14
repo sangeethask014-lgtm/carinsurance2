@@ -4,14 +4,6 @@ import numpy as np
 import pickle
 import json
 import os
-from pathlib import Path
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.linear_model import LinearRegression, Ridge, Lasso
-from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
-from sklearn.metrics import mean_squared_error, r2_score
-import xgboost as xgb
-import lightgbm as lgb
 
 # Page config
 st.set_page_config(page_title="Insurance Premium Predictor", layout="wide")
@@ -20,6 +12,14 @@ st.set_page_config(page_title="Insurance Premium Predictor", layout="wide")
 @st.cache_resource
 def train_and_load_models():
     """Train models if they don't exist, otherwise load them"""
+    from sklearn.model_selection import train_test_split
+    from sklearn.preprocessing import StandardScaler, LabelEncoder
+    from sklearn.linear_model import LinearRegression, Ridge, Lasso
+    from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+    from sklearn.metrics import mean_squared_error, r2_score
+    import xgboost as xgb
+    import lightgbm as lgb
+    
     models_dir = 'models'
     
     # Check if models exist
