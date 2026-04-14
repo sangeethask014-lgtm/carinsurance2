@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.linear_model import Lasso
+from sklearn.linear_model import LinearRegression, Ridge, Lasso
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.metrics import mean_squared_error, r2_score
 import xgboost as xgb
@@ -82,8 +82,8 @@ def train_and_load_models():
     
     # Train models
     models = {
-        'Linear Regression': __import__('sklearn.linear_model', fromlist=['LinearRegression']).LinearRegression(),
-        'Ridge': __import__('sklearn.linear_model', fromlist=['Ridge']).Ridge(alpha=1.0),
+        'Linear Regression': LinearRegression(),
+        'Ridge': Ridge(alpha=1.0),
         'Lasso': Lasso(alpha=1.0),
         'Random Forest': RandomForestRegressor(n_estimators=100, random_state=42, n_jobs=-1),
         'Gradient Boosting': GradientBoostingRegressor(n_estimators=100, random_state=42),
