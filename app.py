@@ -4,9 +4,13 @@ import numpy as np
 import pickle
 import json
 import os
+from pathlib import Path
 
 # Page config
 st.set_page_config(page_title="Insurance Premium Predictor", layout="wide")
+
+# Get the directory of the current script
+script_dir = Path(__file__).parent if '__file__' in globals() else Path.cwd()
 
 # Load models and preprocessing objects
 @st.cache_resource
@@ -20,30 +24,39 @@ def train_and_load_models():
     import xgboost as xgb
     import lightgbm as lgb
     
-    models_dir = 'models'
+    models_dir = script_dir / 'models'
+    data_file = script_dir / 'challenging_insurance_dataset_regression.csv'
     
     # Check if models exist
-    if (os.path.exists(f'{models_dir}/best_model.pkl') and 
-        os.path.exists(f'{models_dir}/scaler.pkl') and 
-        os.path.exists(f'{models_dir}/label_encoders.pkl') and 
-        os.path.exists(f'{models_dir}/results.json')):
+    if (models_dir.exists() and 
+        (models_dir / 'best_model.pkl').exists() and 
+        (models_dir / 'scaler.pkl').exists() and 
+        (models_dir / 'label_encoders.pkl').exists() and 
+        (models_dir / 'results.json').exists()):
         
-        # Load existing models
-        with open(f'{models_dir}/best_model.pkl', 'rb') as f:
-            model = pickle.load(f)
-        with open(f'{models_dir}/scaler.pkl', 'rb') as f:
-            scaler = pickle.load(f)
-        with open(f'{models_dir}/label_encoders.pkl', 'rb') as f:
-            encoders = pickle.load(f)
-        with open(f'{models_dir}/results.json', 'r') as f:
-            results = json.load(f)
-        return model, scaler, encoders, results
+        try:
+            # Load existing models
+            with open(models_dir / 'best_model.pkl', 'rb') as f:
+                model = pickle.load(f)
+            with open(models_dir / 'scaler.pkl', 'rb') as f:
+                scaler = pickle.load(f)
+            with open(models_dir / 'label_encoders.pkl', 'rb') as f:
+                encoders = pickle.load(f)
+            with open(models_dir / 'results.json', 'r') as f:
+                results = json.load(f)
+            return model, scaler, encoders, results
+        except Exception as e:
+            st.warning(f"Could not load models: {e}. Training new models...")
     
     # If models don't exist, train them
+    if not data_file.exists():
+        st.error(f"Dataset not found at {data_file}. Please upload the CSV file.")
+        return None, None, None, None
+    
     st.info("Training models for the first time. This may take a moment...")
     
     # Load and preprocess data
-    df = pd.read_csv('challenging_insurance_dataset_regression.csv')
+    df = pd.read_csv(str(data_file))
     df = df.drop('customer_id', axis=1)
     
     # Convert to numeric types
@@ -117,25 +130,31 @@ def train_and_load_models():
             best_model_name = name
     
     # Create models directory if it doesn't exist
-    os.makedirs(models_dir, exist_ok=True)
+    models_dir.mkdir(exist_ok=True)
     
     # Save best model and preprocessing objects
-    with open(f'{models_dir}/best_model.pkl', 'wb') as f:
+    with open(models_dir / 'best_model.pkl', 'wb') as f:
         pickle.dump(best_model, f)
     
-    with open(f'{models_dir}/scaler.pkl', 'wb') as f:
+    with open(models_dir / 'scaler.pkl', 'wb') as f:
         pickle.dump(scaler, f)
     
-    with open(f'{models_dir}/label_encoders.pkl', 'wb') as f:
+    with open(models_dir / 'label_encoders.pkl', 'wb') as f:
         pickle.dump({'vehicle_type': le_vehicle, 'region': le_region}, f)
     
     results_json = {name: {'rmse': float(res['rmse']), 'r2': float(res['r2'])} for name, res in results.items()}
-    with open(f'{models_dir}/results.json', 'w') as f:
+    with open(models_dir / 'results.json', 'w') as f:
         json.dump(results_json, f, indent=2)
     
     return best_model, scaler, {'vehicle_type': le_vehicle, 'region': le_region}, results_json
 
+# Load models
 model, scaler, encoders, results = train_and_load_models()
+
+# Check if models loaded successfully
+if model is None or scaler is None or encoders is None or results is None:
+    st.error("❌ Failed to load or train models. Please check that the CSV file exists.")
+    st.stop()
 
 # Title and description
 st.title("🚗 Insurance Premium Predictor")
