@@ -21,9 +21,3 @@ Thumbs.db
 
 # Streamlit
 .streamlit/
-
-# Model files (optional - include for demo)
-# models/
-
-# Data files
-*.csv
